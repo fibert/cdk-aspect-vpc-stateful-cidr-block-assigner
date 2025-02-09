@@ -106,7 +106,7 @@ Replace `{VPC ID}` with your actual VPC ID.
 
 ## CIDR Block Assignment Flow
 
-```Mermaid
+```mermaid
 flowchart TD;
    Visit-->IsSubnet{Is it a Subnet?};
    IsSubnet-->NotSubnet[Not a subnet, exit];

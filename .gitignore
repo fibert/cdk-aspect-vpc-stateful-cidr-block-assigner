@@ -49,5 +49,8 @@ junit.xml
 .jsii
 tsconfig.json
 !/API.md
+!/.vscode/extensions.json
 cdk.out/
+.vscode/
+*.subnets.context.json
 !/.projenrc.ts
