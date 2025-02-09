@@ -7,7 +7,7 @@ The VpcStatefulCidrBlockAssigner is designed to maintain consistency in VPC subn
 ## Considerations
 **This CDK Aspect does not follow CDK's best practices and is intended as a break-glass solution when the alternatives can't be used.**
 
-Specifically, this CDK Aspect uses a [Subnet context file](#generate-subnet-context-file) created by the user as a source of thruth for deployed and assigned CIDR blocks. To keep the existing assignments between CIDR Blocks and Subnets, this aspect utilize the [escape hatches](https://docs.aws.amazon.com/cdk/v2/guide/cfn_layer.html) mechanism.
+Specifically, this CDK Aspect uses a [subnet context file](#generate-subnet-context-file) created by the user as a source of thruth for deployed and assigned CIDR blocks. To keep the existing assignments between CIDR Blocks and Subnets, this aspect utilize the [escape hatches](https://docs.aws.amazon.com/cdk/v2/guide/cfn_layer.html) mechanism.
 
 ### Preferred Alternatives
 * Migrate existing CDK stack to use [VPCv2](https://docs.aws.amazon.com/cdk/api/v2/docs/@aws-cdk_aws-ec2-alpha.VpcV2.html)
@@ -23,7 +23,7 @@ Specifically, this CDK Aspect uses a [Subnet context file](#generate-subnet-cont
 * One CIDR block per VPC
 
 ### General
-* To ensure consistancy between deployments you must check in all `${VPC_ID}.subnets.context.json` files to your git repository, see [Subnet Context File](#generate-subnet-context-file)
+* To ensure consistancy between deployments you must check in all `${VPC_ID}.subnets.context.json` files to your git repository, see [Generate Subnet Context File](#generate-subnet-context-file)
 * Removing this aspect after first use will cause deployment issues
 
 
@@ -216,18 +216,6 @@ Requirement: Always have at least two active AZs
 3. Shrink temporary 'non-goal' AZ: `availabilityZones: ['us-east-1a', 'us-east-1c']`
     1. Test that the application is stable
 
-
-## CIDR Block Assignment Flow
-
-```mermaid
-flowchart TD;
-   Visit-->IsSubnet{Is it a Subnet?};
-   IsSubnet-->NotSubnet[Not a subnet, exit];
-   IsSubnet-->IsExistingSubnet{Is it an existing subnet?};
-   IsExistingSubnet-->ExistingSubnet[Yes, assign CIDR block from Subnet context];
-   IsExistingSubnet-->NewSubnet[No, Assign a fresh CIDR block];
-```
-
 ## Troubleshooting
 
 ### Common Issues
@@ -261,3 +249,16 @@ flowchart TD;
    Error message: `Availability Zone {az} must only appear in one of: Availability Zone in VPC, or as a source of AvailabilityZoneSubstitutions`
 
    Solution: Check your VPC configuration and AvailabilityZoneSubstitutions to ensure there are no conflicts. An AZ can't be in both VPC and AvailabilityZoneSubstitutions.
+
+## CIDR Block Assignment Flow
+
+CDK aspects are a powerful feature that allow you to apply cross-cutting changes to your CDK constructs. They work by implementing the `IAspect` interface, which defines a `visit` method. This method is called for each construct in the construct tree, allowing the aspect to inspect and modify the constructs as needed. The VpcStatefulCidrBlockAssigner uses this mechanism to intercept and modify subnet CIDR block assignments, ensuring consistency across deployments while respecting existing assignments.
+
+```mermaid
+flowchart TD;
+   Visit-->IsSubnet{Is it a Subnet?};
+   IsSubnet-->NotSubnet[Not a subnet, exit];
+   IsSubnet-->IsExistingSubnet{Is it an existing subnet?};
+   IsExistingSubnet-->ExistingSubnet[Yes, assign CIDR block from Subnet context];
+   IsExistingSubnet-->NewSubnet[No, Assign a fresh CIDR block];
+```
