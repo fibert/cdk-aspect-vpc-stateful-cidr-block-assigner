@@ -115,39 +115,6 @@ flowchart TD;
    IsExistingSubnet-->NewSubnet[No, Assign a fresh CIDR block];
 ```
 
-## Data Flow
-
-The VpcStatefulCidrBlockAssigner modifies the CIDR block assignments for VPC subnets during the perpare [stage of the CDK synthesis process](https://docs.aws.amazon.com/cdk/v2/guide/deploy.html#deploy-how-synth-app):
-
-1. CDK stack initialization
-2. VPC construct creation
-3. VpcStatefulCidrBlockAssigner aspect application
-4. CDK synthesis
-   - Aspect visits each construct in the stack
-   - For Subnet constructs:
-     - Looks up assigned CIDR block from context file
-     - Overrides Subnet's CIDR block if found
-   - For new Subnets:
-     - Assigns new CIDR blocks from context
-5. CloudFormation template generation
-6. CloudFormation stack deployment
-
-```
-[CDK Stack] -> [VPC Construct] -> [VpcStatefulCidrBlockAssigner Aspect]
-                                          |
-                                          v
-[Subnet Context File] <- (read) <- [CIDR Block Assignment]
-                                          |
-                                          v
-                                 [Modified Subnet Constructs]
-                                          |
-                                          v
-                            [CloudFormation Template Generation]
-                                          |
-                                          v
-                               [CloudFormation Deployment]
-```
-
 ## Troubleshooting
 
 ### Common Issues
