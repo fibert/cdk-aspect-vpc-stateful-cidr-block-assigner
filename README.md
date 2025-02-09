@@ -5,9 +5,9 @@ This project provides a CDK Aspect that alters Amazon VPC subnet CIDR block assi
 The VpcStatefulCidrBlockAssigner is designed to maintain consistency in VPC subnet CIDR blocks across deployments, ensuring that existing subnets retain their assigned CIDR blocks while allowing for the addition of new subnets.
 
 ## Considerations
-This CDK Aspect does not follow CDK's best practices and is intended as a break-glass solution when the alternatives can't be used.
+**This CDK Aspect does not follow CDK's best practices and is intended as a break-glass solution when the alternatives can't be used.**
 
-Specifically, this CDK Aspect uses a Subnet context file created by the user as a source of thruth for deployed and assigned CIDR blocks. To keep the existing assignments between CIDR Blocks and Subnets, this aspect utilize the [escape hatches](https://docs.aws.amazon.com/cdk/v2/guide/cfn_layer.html) mechanism.
+Specifically, this CDK Aspect uses a [Subnet context file](#generate-subnet-context-file) created by the user as a source of thruth for deployed and assigned CIDR blocks. To keep the existing assignments between CIDR Blocks and Subnets, this aspect utilize the [escape hatches](https://docs.aws.amazon.com/cdk/v2/guide/cfn_layer.html) mechanism.
 
 ### Preferred Alternatives
 * Migrate existing CDK stack to use [VPCv2](https://docs.aws.amazon.com/cdk/api/v2/docs/@aws-cdk_aws-ec2-alpha.VpcV2.html)
@@ -18,16 +18,17 @@ Specifically, this CDK Aspect uses a Subnet context file created by the user as 
 * You can only apply aspect to a CDK construct tree containing up to one VPC
 * VPC construct and provided VPC ID must match
 * Only supports IPv4
-* One CIDR block per VPC(?)
+* One CIDR block per VPC
 
 ### General
-* To ensure consistancy between deployments you must check in all `${VPC_ID}.subnets.context.json` files to your git repository, see [Subnet Context File](#subnet-context-file)
-* Removing this aspect after first usage will cause deployment issues
+* To ensure consistancy between deployments you must check in all `${VPC_ID}.subnets.context.json` files to your git repository, see [Subnet Context File](#generate-subnet-context-file)
+* Removing this aspect after first use will cause deployment issues
 
-### Supported actions
-* Add and remove the last specified AZ in the `availabilityZones` prop; I.e., the right-most AZ
-* Substitute any AZ with another
 
+## Availability Zone Migration Considerations
+When migrating AWS resources between availability zones (AZ), it's recommended to use the Expand/Shrink approach. This method involves expanding your VPC to include new AZs, deploy your application resources in the new AZs, and then gradually shrink the footprint in the AZs you want to migrate away from.
+
+The shrinking process, which involves removing resources and subnets from the AZs you're migrating away from, requires extreme caution. Before deleting any AWS resources or subnets, it's essential to ensure that all critical workloads and data have been successfully migrated to the new AZs. Only after confirming that all resources have been safely migrated and that there are no dependencies on the old AZs should you proceed with deletion. Remember that deleting resources is irreversible, so always double-check and consider using temporary safeguards like disabling termination protection only when you're absolutely certain about the deletion.
 
 ## Usage Instructions
 
@@ -42,6 +43,19 @@ To install the package in your project:
 ```bash
 npm install cdk-aspect-vpc-stateful-cidr-block-assigner
 ```
+
+### Generate Subnet Context File
+
+The VpcStatefulCidrBlockAssigner relies on a subnet context file to maintain CIDR block assignments. This file should be named `{vpcId}.subnets.context.json` and placed in the project root or the specified `contextFileDirectory`.
+
+To generate this file, use the following AWS CLI command:
+
+```bash
+export VPC_ID="{VPC ID}"
+aws ec2 describe-subnets --filters Name=vpc-id,Values=${VPC_ID} --query "Subnets[*].{Name: Tags[?Key == 'aws-cdk:subnet-name'] | [0].Value, LogicalId: Tags[?Key == 'aws:cloudformation:logical-id'] | [0].Value, AvailabilityZone: AvailabilityZone, CidrBlock: CidrBlock}" > ${VPC_ID}.subnets.context.json
+```
+
+Replace `{VPC ID}` with your actual VPC ID.
 
 ### Getting Started
 
@@ -91,18 +105,115 @@ const vpcStatefulCidrBlockAssigner = new VpcStatefulCidrBlockAssigner({
 });
 ```
 
-### Subnet Context File
+### Supported Actions
 
-The VpcStatefulCidrBlockAssigner relies on a subnet context file to maintain CIDR block assignments. This file should be named `{vpcId}.subnets.context.json` and placed in the project root or the specified `contextFileDirectory`.
+The VPC construct assigns [Logical IDs](https://docs.aws.amazon.com/cdk/v2/guide/identifiers.html#identifiers_logical_ids) to its subnets based on the order of `availabilityZones`. Any change to these Logical ID will cause a re-deployment of the resource. 
 
-To generate this file, use the following AWS CLI command:
+Adding or removing AZs in the non-last spot of `availabilityZones` will cause a re-arrangement of the AZ order, which in turn, cause changes to the subnets' Logical IDs and a replacement. 
 
-```bash
-export VPC_ID="{VPC ID}"
-aws ec2 describe-subnets --filters Name=vpc-id,Values=${VPC_ID} --query "Subnets[*].{Name: Tags[?Key == 'aws-cdk:subnet-name'] | [0].Value, LogicalId: Tags[?Key == 'aws:cloudformation:logical-id'] | [0].Value, AvailabilityZone: AvailabilityZone, CidrBlock: CidrBlock}" > ${VPC_ID}.subnets.context.json
+#### Add Availability Zones
+
+To add a new Availability Zone to your VPC:
+
+1. Follow [Generate Subnet Context File](#generate-subnet-context-file) instructions to generate an updated subnet context file
+2. Update your VPC configuration in your CDK stack to include the new AZ in the `availabilityZones` prop
+3. Ensure the new AZ is added as the last (right-most) item in the `availabilityZones` array
+4. [Optional] Use `npx cdk diff` command to inspect the upcoming changes
+5. Run your CDK deployment command (e.g., `npx cdk deploy`)
+6. Follow [Generate Subnet Context File](#generate-subnet-context-file) instructions to generate an updated subnet context file
+
+
+Example:
+
+```typescript
+const vpc = new ec2.Vpc(this, 'MyVpc', {
+  ipAddresses: ec2.IpAddresses.cidr('10.0.0.0/16'),
+  availabilityZones: ['us-east-1a', 'us-east-1b', 'us-east-1c'], // Added 'us-east-1c'
+  // ... other configuration options
+});
 ```
 
-Replace `{VPC ID}` with your actual VPC ID.
+The VpcStatefulCidrBlockAssigner will automatically assign CIDR blocks to the new subnets in the added AZ while preserving the existing CIDR block assignments for the other AZs.
+
+#### Remove Availability Zones
+
+To remove an Availability Zone from your VPC:
+
+1. Follow [Generate Subnet Context File](#generate-subnet-context-file) instructions to generate an updated subnet context file
+2. Make sure there are no AWS resources depending on subnets in the deleted AZs
+3. Update your VPC configuration in your CDK stack to remove the AZ from the `availabilityZones` prop
+4. Ensure you are only removing the last (right-most) AZ from the `availabilityZones` array
+5. [Optional] Use `npx cdk diff` command to inspect the upcoming changes
+6. Run your CDK deployment command (e.g., `npx cdk deploy`)
+7. Follow [Generate Subnet Context File](#generate-subnet-context-file) instructions to generate an updated subnet context file
+
+
+Example:
+
+```typescript
+const vpc = new ec2.Vpc(this, 'MyVpc', {
+  ipAddresses: ec2.IpAddresses.cidr('10.0.0.0/16'),
+  availabilityZones: ['us-east-1a', 'us-east-1b'], // Removed 'us-east-1c'
+  // ... other configuration options
+});
+```
+
+The VpcStatefulCidrBlockAssigner will automatically handle the removal of subnets in the deleted AZ while maintaining the CIDR block assignments for the remaining AZs.
+
+#### Substitute Availability Zones
+
+When AWS CloudFormation performs a replacement of an AWS resource it first deploys the new resource and then deletes the old resource. When substituting between AZs we want to re-use existing CIDR blocks, hence, we need to manually delete the subnets in the AZs we are substituting "to free up" the CIDR blocks for the new subnets.
+
+Note: This diverges from IaC best practices and should be done with extreme caution.
+
+To substitute one Availability Zone with another:
+
+1. Follow [Generate Subnet Context File](#generate-subnet-context-file) instructions to generate an updated subnet context file
+2. Update your VPC configuration in your CDK stack to replace the old AZ with the new one in the `availabilityZones` prop
+3. Configure the VpcStatefulCidrBlockAssigner with the `availabilityZoneSubstitutions` option
+4. Manually delete the subnets in the removed AZs
+5. [Optional] Use `npx cdk diff` command to inspect the upcoming changes
+6. Run your CDK deployment command (e.g., `npx cdk deploy`)
+7. Remove the `availabilityZoneSubstitutions` option from VpcStatefulCidrBlockAssigner
+8. Follow [Generate Subnet Context File](#generate-subnet-context-file) instructions to generate an updated subnet context file
+
+
+Example:
+
+```typescript
+const vpc = new ec2.Vpc(this, 'MyVpc', {
+  ipAddresses: ec2.IpAddresses.cidr('10.0.0.0/16'),
+  availabilityZones: ['us-east-1c', 'us-east-1b'], // Replaced 'us-east-1a' with 'us-east-1c'
+  // ... other configuration options
+});
+
+const vpcStatefulCidrBlockAssigner = new VpcStatefulCidrBlockAssigner({
+  vpcId: 'vpc-01234567890abcdef',
+  availabilityZoneSubstitutions: [
+    { source: 'us-east-1b', target: 'us-east-1c' }
+  ]
+});
+
+cdk.Aspects.of(vpc).add(vpcStatefulCidrBlockAssigner);
+```
+
+The VpcStatefulCidrBlockAssigner will reassign the CIDR blocks from the old AZ (us-east-1a) to the new AZ (us-east-1c) while maintaining the existing CIDR block assignments for other AZs.
+
+
+### Example Migration Plan
+Starting point: `availabilityZones: ['us-east-1a', 'us-east-1b']`  
+Goal: `availabilityZones: ['us-east-1a', 'us-east-1c']`  
+Requirement: Always have at least two active AZs  
+
+1. Expand by adding a new temporary 'non-goal' AZ: `availabilityZones: ['us-east-1a', 'us-east-1b', 'us-east-1d']`
+    1. Deploy the application to the new AZ (us-east-1d)
+    2. Test that the application is stable
+2. Substitute original AZ with a goal AZ: `availabilityZones: ['us-east-1a', 'us-east-1c', 'us-east-1d']`
+    1. Deploy the application to the new AZ (us-east-1c)
+    2. Test that the application is stable
+3. Shrink temporary 'non-goal' AZ: `availabilityZones: ['us-east-1a', 'us-east-1c']`
+    1. Test that the application is stable
+
 
 ## CIDR Block Assignment Flow
 
