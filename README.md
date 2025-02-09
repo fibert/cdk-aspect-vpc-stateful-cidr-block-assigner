@@ -17,6 +17,8 @@ Specifically, this CDK Aspect uses a [Subnet context file](#generate-subnet-cont
 * VPC construct declares AZs using `availabilityZones` prop and not `maxAzs` prop; E.g., `availabilityZones: ['us-east-1a', 'us-east-1b']`
 * You can only apply aspect to a CDK construct tree containing up to one VPC
 * VPC construct and provided VPC ID must match
+
+### Limitations
 * Only supports IPv4
 * One CIDR block per VPC
 
