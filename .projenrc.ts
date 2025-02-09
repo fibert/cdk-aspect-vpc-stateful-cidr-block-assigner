@@ -2,7 +2,7 @@ import { awscdk } from 'projen';
 const project = new awscdk.AwsCdkConstructLibrary({
   author: 'Dor Fibert',
   authorAddress: 'dorfib@gmail.com',
-  cdkVersion: '2.177.0',
+  cdkVersion: '2.178.1',
   defaultReleaseBranch: 'main',
   jsiiVersion: '~5.7.0',
   name: 'cdk-aspect-vpc-stateful-cidr-block-assigner',
