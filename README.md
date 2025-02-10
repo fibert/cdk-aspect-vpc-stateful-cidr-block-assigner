@@ -1,5 +1,9 @@
 # CDK Aspect for VPC Stateful CIDR Block Assignment
 
+Updating Availability Zones (AZs) and subnets in an existing VPC within a deployed CDK stack presents a significant challenge when using the [ec2.Vpc construct](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ec2.Vpc.html). When introducing new AZs (e.g., from 2 to 3 AZs), CDK attempts to create new subnets for the additional AZ, but these new subnets' CIDR blocks conflict with existing subnet CIDRs. Attempting to do so results in the error message: "The CIDR 'X.Y.Z.0/24' conflicts with another subnet."
+
+The core problem is that CDK applications cannot keep state between runs. This means when you try to modify the VPC by adding an AZ, the VPC construct is not aware of what CIDR ranges are already in use from previous deployments.
+
 This project provides a CDK Aspect that alters Amazon VPC subnet CIDR block assignments to respect existing CIDR blocks when updating a CDK VPC construct.
 
 The VpcStatefulCidrBlockAssigner is designed to maintain consistency in VPC subnet CIDR blocks across deployments, ensuring that existing subnets retain their assigned CIDR blocks while allowing for the addition of new subnets.
@@ -7,11 +11,11 @@ The VpcStatefulCidrBlockAssigner is designed to maintain consistency in VPC subn
 ## Considerations
 **This CDK Aspect does not follow CDK's best practices and is intended as a break-glass solution when the alternatives can't be used.**
 
-Specifically, this CDK Aspect uses a [subnet context file](#generate-subnet-context-file) created by the user as a source of thruth for deployed and assigned CIDR blocks. To keep the existing assignments between CIDR Blocks and Subnets, this aspect utilize the [escape hatches](https://docs.aws.amazon.com/cdk/v2/guide/cfn_layer.html) mechanism.
+Specifically, this CDK Aspect uses a [subnet context file](#generate-subnet-context-file) created by the user as a source of truth for deployed and assigned CIDR blocks. To keep the existing assignments between CIDR Blocks and Subnets, this aspect utilize the [escape hatches](https://docs.aws.amazon.com/cdk/v2/guide/cfn_layer.html) mechanism.
 
 ### Preferred Alternatives
 * Migrate existing CDK stack to use [VPCv2](https://docs.aws.amazon.com/cdk/api/v2/docs/@aws-cdk_aws-ec2-alpha.VpcV2.html)
-* Replace existing CDK stack to a new CDK stack with updated configuration
+* Replace existing CDK stack with a new CDK stack with updated configuration
 
 ### Aspect Prerequisites
 * VPC construct declares AZs using `availabilityZones` prop and not `maxAzs` prop; E.g., `availabilityZones: ['us-east-1a', 'us-east-1b']`
@@ -23,12 +27,12 @@ Specifically, this CDK Aspect uses a [subnet context file](#generate-subnet-cont
 * One CIDR block per VPC
 
 ### General
-* To ensure consistancy between deployments you must check in all `${VPC_ID}.subnets.context.json` files to your git repository, see [Generate Subnet Context File](#generate-subnet-context-file)
+* To ensure consistency between deployments, you must check in all `${VPC_ID}.subnets.context.json` files to your git repository, see [Generate Subnet Context File](#generate-subnet-context-file)
 * Removing this aspect after first use will cause deployment issues
 
 
 ## Availability Zone Migration Considerations
-When migrating AWS resources between availability zones (AZ), it's recommended to use the Expand/Shrink approach. This method involves expanding your VPC to include new AZs, deploy your application resources in the new AZs, and then gradually shrink the footprint in the AZs you want to migrate away from.
+When migrating AWS resources between AZs, it's recommended to use the Expand/Shrink approach. This method involves expanding your VPC to include new AZs, deploy your application resources in the new AZs, and then gradually shrink the footprint in the AZs you want to migrate away from.
 
 The shrinking process, which involves removing resources and subnets from the AZs you're migrating away from, requires extreme caution. Before deleting any AWS resources or subnets, it's essential to ensure that all critical workloads and data have been successfully migrated to the new AZs. Only after confirming that all resources have been safely migrated and that there are no dependencies on the old AZs should you proceed with deletion. Remember that deleting resources is irreversible, so always double-check and consider using temporary safeguards like disabling termination protection only when you're absolutely certain about the deletion.
 
