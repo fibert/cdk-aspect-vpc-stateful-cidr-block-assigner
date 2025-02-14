@@ -29,6 +29,7 @@ Specifically, this CDK Aspect uses a [subnet context file](#generate-subnet-cont
 ### General
 * To ensure consistency between deployments, you must check in all `${VPC_ID}.subnets.context.json` files to your git repository, see [Generate Subnet Context File](#generate-subnet-context-file)
 * Removing this aspect after first use will cause deployment issues
+  * Since this CDK aspect overrides the CIDR blocks assigned by the VPC construct, removing this aspect after first use will cause subnets to be assigned their "default" CIDR blocks, resulting in resource replacement or a deployment errors
 
 
 ## General Availability Zone Migration Considerations
