@@ -28,21 +28,21 @@ export class IntegTesting {
       vpcId: 'vpc-01b37083041d6f6c5',
       // availabilityZoneSubstitutions: [{source: 'us-east-1b', target: 'us-east-1c'}],
     });
-    cdk.Aspects.of(vpc).add(vpcStatefulCidrBlockAssigner, {priority: cdk.AspectPriority.MUTATING});
+    cdk.Aspects.of(vpc).add(vpcStatefulCidrBlockAssigner, { priority: cdk.AspectPriority.MUTATING });
   }
 }
 
 const CIDR_BLOCK = '10.10.0.0/16';
-const AVAILABILITY_ZONES: Array<string> = ['us-east-1a','us-east-1c'];
+const AVAILABILITY_ZONES: Array<string> = ['us-east-1a', 'us-east-1c'];
 const SUBNET_CONFIGURATION: Array<ec2.SubnetConfiguration> = [
   { name: 'proxies', cidrMask: 24, subnetType: ec2.SubnetType.PUBLIC },
   { name: 'backend', cidrMask: 24, subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
   { name: 'database', cidrMask: 24, subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
 ];
 
-const integ = new IntegTesting({ 
-  cidrBlock: CIDR_BLOCK, 
-  availabilityZones: AVAILABILITY_ZONES, 
-  subnetConfiguration: SUBNET_CONFIGURATION 
+const integ = new IntegTesting({
+  cidrBlock: CIDR_BLOCK,
+  availabilityZones: AVAILABILITY_ZONES,
+  subnetConfiguration: SUBNET_CONFIGURATION,
 });
 integ.app.synth();

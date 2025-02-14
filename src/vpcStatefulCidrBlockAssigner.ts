@@ -1,8 +1,7 @@
-import { IAspect, aws_ec2 as ec2 } from 'aws-cdk-lib';
-import { IConstruct } from 'constructs';
 import * as fs from 'fs';
 import * as path from 'path';
-
+import { IAspect, aws_ec2 as ec2 } from 'aws-cdk-lib';
+import { IConstruct } from 'constructs';
 
 interface SubnetRecord {
   readonly Name: string;
@@ -39,7 +38,7 @@ export interface VpcStatefulCidrBlockAssignerProps {
    * An optional mapping of Availability Zones to substitute.
    * Used to assign the source AZ's subnets' CIDR blocks for the target AZ's subnets.
    * You must first manually delete all VPC subnets in each of the source AZs.
-   * 
+   *
    * @throws Error if a source Availability Zone is found in the VPC
    *
    * @example
@@ -48,17 +47,17 @@ export interface VpcStatefulCidrBlockAssignerProps {
    *   {source: 'us-east-1c', target: 'us-east-1d'},
    * ]
    */
-  readonly availabilityZoneSubstitutions?: Array<AvailabilityZoneSubstitution> // TODO: Test
+  readonly availabilityZoneSubstitutions?: Array<AvailabilityZoneSubstitution>; // TODO: Test
 }
 
 /**
- * An aspect which can be applied to a VPC to override CIDR blocks of subnets. 
+ * An aspect which can be applied to a VPC to override CIDR blocks of subnets.
  * This aspect rely on a Subent context file containing an updated data about your deployed VPC structure.
  * To generate this file, use the script in README.md.
  * The default location for the Subnet context file is at Current Working Directory.
  *
  * @example
- * 
+ *
  * const network = Network(...) // Contains exactly one VPC construct
  *
  * const vpcStatefulCidrBlockAssigner = new VpcStatefulCidrBlockAssigner({
@@ -71,81 +70,116 @@ export interface VpcStatefulCidrBlockAssignerProps {
 export class VpcStatefulCidrBlockAssigner implements IAspect {
   private subnetContext: Array<SubnetRecord>;
   private assignedCiderBlock: Array<string>;
-  
+
   private freshCidrBlocksAwaitingSubnet: Array<string> = [];
   private subnetsAwaitingFreshCidrBlock: Array<ec2.Subnet> = [];
-  
+
   private vpcCount: number = 0;
   private disallowedAvailabilityZones: Array<string> = [];
 
   constructor(props: VpcStatefulCidrBlockAssignerProps) {
-    const subnetContextFilePath = this.generateContextFilePath(props.vpcId, props.contextFileDirectory);
+    const subnetContextFilePath = this.generateContextFilePath(
+      props.vpcId,
+      props.contextFileDirectory,
+    );
     this.subnetContext = this.readSubnetContextFromFile(subnetContextFilePath);
-    this.assignedCiderBlock = this.collectAssignedCidrBlocks(this.subnetContext);
+    this.assignedCiderBlock = this.collectAssignedCidrBlocks(
+      this.subnetContext,
+    );
 
     if (typeof props.availabilityZoneSubstitutions !== 'undefined') {
-      this.subnetContext = this.applyAvailabilityZoneSubstitution(this.subnetContext, props.availabilityZoneSubstitutions);
-      this.disallowedAvailabilityZones = this.collectDisallowedAvailabilityZones(props.availabilityZoneSubstitutions);
+      this.subnetContext = this.applyAvailabilityZoneSubstitution(
+        this.subnetContext,
+        props.availabilityZoneSubstitutions,
+      );
+      this.disallowedAvailabilityZones =
+        this.collectDisallowedAvailabilityZones(
+          props.availabilityZoneSubstitutions,
+        );
     }
   }
 
-  private collectAssignedCidrBlocks(subnetContext: Array<SubnetRecord>): Array<string> {
+  private collectAssignedCidrBlocks(
+    subnetContext: Array<SubnetRecord>,
+  ): Array<string> {
     return subnetContext.map((subnet) => subnet.CidrBlock);
   }
-  private collectDisallowedAvailabilityZones(availabilityZoneSubstitutions: Array<AvailabilityZoneSubstitution>): Array<string> {
-    return availabilityZoneSubstitutions.map((substitution) => substitution.source);
+  private collectDisallowedAvailabilityZones(
+    availabilityZoneSubstitutions: Array<AvailabilityZoneSubstitution>,
+  ): Array<string> {
+    return availabilityZoneSubstitutions.map(
+      (substitution) => substitution.source,
+    );
   }
 
-  private applyAvailabilityZoneSubstitution(subnetContext: Array<SubnetRecord>, availabilityZoneSubstitutions: Array<AvailabilityZoneSubstitution>): Array<SubnetRecord> {
+  private applyAvailabilityZoneSubstitution(
+    subnetContext: Array<SubnetRecord>,
+    availabilityZoneSubstitutions: Array<AvailabilityZoneSubstitution>,
+  ): Array<SubnetRecord> {
     const newSubnetContext = subnetContext.map((subnet) => {
       availabilityZoneSubstitutions.forEach((substitution) => {
         if (subnet.AvailabilityZone === substitution.source) {
           subnet.AvailabilityZone = substitution.target;
         }
-      })
+      });
       return subnet;
     });
 
     return newSubnetContext;
   }
 
-
-  private generateContextFilePath(vpcId: string, contextFileDirectory?: string): string {
-    const directoryPath: string = ((typeof contextFileDirectory !== 'undefined') ? contextFileDirectory : process.cwd());
-    const contextFilePath = path.join(directoryPath, `${vpcId}.subnets.context.json`);
+  private generateContextFilePath(
+    vpcId: string,
+    contextFileDirectory?: string,
+  ): string {
+    const directoryPath: string =
+      typeof contextFileDirectory !== 'undefined'
+        ? contextFileDirectory
+        : process.cwd();
+    const contextFilePath = path.join(
+      directoryPath,
+      `${vpcId}.subnets.context.json`,
+    );
     return contextFilePath;
   }
 
-  private readSubnetContextFromFile(path: string): Array<SubnetRecord> {
+  private readSubnetContextFromFile(
+    subnetContextFilePath: string,
+  ): Array<SubnetRecord> {
     let subnetContextJsonString: string;
     let subnetContext: Array<SubnetRecord>;
 
     try {
-      subnetContextJsonString = fs.readFileSync(path, 'utf-8');
+      subnetContextJsonString = fs.readFileSync(subnetContextFilePath, 'utf-8');
     } catch (error) {
-      console.error(`Error reading subnet context file: ${path}. Use provided script in README.md to generate.`);
+      console.error(
+        `Error reading subnet context file: ${subnetContextFilePath}. Use provided script in README.md to generate.`,
+      );
       throw error;
     }
 
     if (subnetContextJsonString.length == 0) {
-      console.error(`Subnet context file is empty. Use provided script in README.md to generate.`);
+      console.error(
+        'Subnet context file is empty. Use provided script in README.md to generate.',
+      );
       throw new Error('Subnet context file is empty');
     }
 
     try {
-      subnetContext = JSON.parse(subnetContextJsonString) as Array<SubnetRecord>;
+      subnetContext = JSON.parse(
+        subnetContextJsonString,
+      ) as Array<SubnetRecord>;
     } catch (error) {
-      console.error(`Error parsing subnet context file. Use provided script in README.md to generate.`);
+      console.error(
+        'Error parsing subnet context file. Use provided script in README.md to generate.',
+      );
       throw error;
     }
 
     return subnetContext;
   }
 
-
-
   visit(node: IConstruct): void {
-
     if (node instanceof ec2.Vpc) {
       this.validateVpc(node as ec2.Vpc);
       return;
@@ -154,25 +188,29 @@ export class VpcStatefulCidrBlockAssigner implements IAspect {
     if (!(node instanceof ec2.Subnet)) {
       return;
     }
-    
+
     const subnet = node as ec2.Subnet;
     this.validateSubnet(subnet);
 
     const logicalId = subnet.node.id;
-    const availabilityZone = subnet.availabilityZone
+    const availabilityZone = subnet.availabilityZone;
 
-    const subnetRecord = this.lookupAssignedSubnetCidrBlock(logicalId, availabilityZone);
+    const subnetRecord = this.lookupAssignedSubnetCidrBlock(
+      logicalId,
+      availabilityZone,
+    );
 
     if (subnetRecord) {
       this.handleExistingSubnet(subnet, subnetRecord);
-    }
-    else {
+    } else {
       this.handleNewSubnet(subnet);
     }
   }
 
-
-  private handleExistingSubnet(subnet: ec2.Subnet, subnetRecord: SubnetRecord): void {
+  private handleExistingSubnet(
+    subnet: ec2.Subnet,
+    subnetRecord: SubnetRecord,
+  ): void {
     const synthCidrBlock = subnet.ipv4CidrBlock;
 
     if (this.isFreshCidrBlock(synthCidrBlock)) {
@@ -197,17 +235,24 @@ export class VpcStatefulCidrBlockAssigner implements IAspect {
     l1Subnet.addPropertyOverride('CidrBlock', newCidrBlock);
   }
 
-  private lookupAssignedSubnetCidrBlock(nodeId: string, availabilityZone: string): SubnetRecord | undefined {
-    return this.subnetContext.filter((subnet) => {
-      return nodeId.includes(subnet.Name) && subnet.AvailabilityZone == availabilityZone;
-    }).pop();
+  private lookupAssignedSubnetCidrBlock(
+    nodeId: string,
+    availabilityZone: string,
+  ): SubnetRecord | undefined {
+    return this.subnetContext
+      .filter((subnet) => {
+        return (
+          nodeId.includes(subnet.Name) &&
+          subnet.AvailabilityZone == availabilityZone
+        );
+      })
+      .pop();
   }
   private matchSubnetWithCidrBlock(subnet: ec2.Subnet): void {
     if (this.freshCidrBlocksAwaitingSubnet.length > 0) {
       const freshCidrBlock = this.freshCidrBlocksAwaitingSubnet.pop()!;
       this.setSubnetCidrBlock(subnet, freshCidrBlock);
-    }
-    else {
+    } else {
       this.subnetsAwaitingFreshCidrBlock.push(subnet);
     }
   }
@@ -216,8 +261,7 @@ export class VpcStatefulCidrBlockAssigner implements IAspect {
     if (this.subnetsAwaitingFreshCidrBlock.length > 0) {
       const subnet = this.subnetsAwaitingFreshCidrBlock.pop()!;
       this.setSubnetCidrBlock(subnet, cidrBlock);
-    }
-    else {
+    } else {
       this.freshCidrBlocksAwaitingSubnet.push(cidrBlock);
     }
   }
@@ -229,13 +273,16 @@ export class VpcStatefulCidrBlockAssigner implements IAspect {
   private validateVpc(_vpc: ec2.Vpc): void {
     this.vpcCount++;
     if (this.vpcCount > 1) {
-      throw new Error('VpcStatefulCidrBlockAssigner can only be applied to a single VPC');
+      throw new Error(
+        'VpcStatefulCidrBlockAssigner can only be applied to a single VPC',
+      );
     }
   }
   private validateSubnet(subnet: ec2.Subnet): void {
     if (this.disallowedAvailabilityZones.includes(subnet.availabilityZone)) {
-      throw new Error(`Availability Zone ${subnet.availabilityZone} must only appear in one of: Availability Zone in VPC, or as a source of AvailabilityZoneSubstitutions`);
+      throw new Error(
+        `Availability Zone ${subnet.availabilityZone} must only appear in one of: Availability Zone in VPC, or as a source of AvailabilityZoneSubstitutions`,
+      );
     }
-    
   }
 }
