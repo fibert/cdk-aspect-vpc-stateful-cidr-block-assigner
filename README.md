@@ -2,7 +2,7 @@
 
 Updating Availability Zones (AZs) and subnets in an existing VPC within a deployed CDK stack presents a significant challenge when using the [ec2.Vpc construct](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ec2.Vpc.html). When introducing new AZs (e.g., from 2 to 3 AZs), CDK attempts to create new subnets for the additional AZ, but these new subnets' CIDR blocks conflict with existing subnet CIDRs. Attempting to do so results in the error message: "The CIDR 'X.Y.Z.0/24' conflicts with another subnet."
 
-The core problem is that CDK applications cannot keep state between runs. This means when you try to modify the VPC by adding an AZ, the VPC construct is not aware of what CIDR ranges are already in use from previous deployments.
+The reason is that CDK applications, by design, don't keep state between runs. This means when you try to modify the VPC by adding an AZ, the VPC construct is not aware of what CIDR ranges are already in use from previous deployments.
 
 This project provides a CDK Aspect that alters Amazon VPC subnet CIDR block assignments to respect existing CIDR blocks when updating a CDK VPC construct.
 
