@@ -53,7 +53,26 @@ npm install cdk-aspect-vpc-stateful-cidr-block-assigner
 
 ### Generate Subnet Context File
 
-The VpcStatefulCidrBlockAssigner relies on a subnet context file to maintain CIDR block assignments. This file should be named `{vpcId}.subnets.context.json` and placed in the project root or the specified `contextFileDirectory`.
+The VpcStatefulCidrBlockAssigner relies on a JSON file describing the current state of your VPC. The users are responsible for creating and updating this file before and after any change to their VPC state. To be aligned with CDK's terminology we refer to this file as the subnet context file.
+
+This file should be named `{vpcId}.subnets.context.json` and placed in the project root or the specified `contextFileDirectory`.
+
+The subnet context file holds a list of JSON objects describing each subnet inside a VPC:
+```json
+[
+    {
+        "Name": "SubnetName",
+        "LogicalId": "SubnetNameLogicalId",
+        "AvailabilityZone": "AvailabilityZone",
+        "CidrBlock": "SubnetCidrBlock"
+    },
+    ...
+]
+```
+
+This CDK aspect will try to use the values in the subnet context file to match between subnets and CIDR blocks during CDK synth time to prevent CIDR block conflicts when introducing or replacing VPC AZs.
+
+I highly recommend to create and update this file manually only. Do not set up any automation around it since any changes done to your VPC should be done carefuly and responsibly, with high level of awareness.
 
 To generate this file, use the following AWS CLI command:
 
