@@ -8,7 +8,7 @@ This project provides a CDK Aspect that alters Amazon VPC subnet CIDR block assi
 
 The VpcStatefulCidrBlockAssigner is designed to maintain consistency in VPC subnet CIDR blocks across deployments, ensuring that existing subnets retain their assigned CIDR blocks while allowing for the addition of new subnets.
 
-## Considerations
+## Aspect Considerations
 **This CDK Aspect does not follow CDK's best practices and is intended as a break-glass solution when the alternatives can't be used.**
 
 Specifically, this CDK Aspect uses a [subnet context file](#generate-subnet-context-file) created by the user as a source of truth for deployed and assigned CIDR blocks. To keep the existing assignments between CIDR Blocks and Subnets, this aspect utilize the [escape hatches](https://docs.aws.amazon.com/cdk/v2/guide/cfn_layer.html) mechanism.
@@ -31,7 +31,7 @@ Specifically, this CDK Aspect uses a [subnet context file](#generate-subnet-cont
 * Removing this aspect after first use will cause deployment issues
 
 
-## Availability Zone Migration Considerations
+## General Availability Zone Migration Considerations
 When migrating AWS resources between AZs, it's recommended to use the Expand/Shrink approach. This method involves expanding your VPC to include new AZs, deploy your application resources in the new AZs, and then gradually shrink the footprint in the AZs you want to migrate away from.
 
 The shrinking process, which involves removing resources and subnets from the AZs you're migrating away from, requires extreme caution. Before deleting any AWS resources or subnets, it's essential to ensure that all critical workloads and data have been successfully migrated to the new AZs. Only after confirming that all resources have been safely migrated and that there are no dependencies on the old AZs should you proceed with deletion. Remember that deleting resources is irreversible, so always double-check and consider using temporary safeguards like disabling termination protection only when you're absolutely certain about the deletion.
