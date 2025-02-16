@@ -2,7 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import { aws_ec2 as ec2 } from 'aws-cdk-lib';
 import { VpcStatefulCidrBlockAssigner } from './vpcStatefulCidrBlockAssigner';
 
-interface IIntegTestingProps {
+interface IntegTestingProps {
   cidrBlock: string;
   availabilityZones: Array<string>;
   subnetConfiguration: Array<ec2.SubnetConfiguration>;
@@ -12,7 +12,7 @@ export class IntegTesting {
   readonly stack: cdk.Stack;
   readonly app: cdk.App;
 
-  constructor(props: IIntegTestingProps) {
+  constructor(props: IntegTestingProps) {
 
     const ENV: cdk.Environment = { account: '027179758433', region: 'us-east-1' };
     this.app = new cdk.App();
