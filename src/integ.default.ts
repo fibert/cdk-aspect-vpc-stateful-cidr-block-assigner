@@ -43,7 +43,7 @@ const integ = new IntegTesting({
 
 
 const vpcStatefulCidrBlockAssigner = new VpcStatefulCidrBlockAssigner({
-  vpcId: 'vpc-01b37083041d6f6c5',
+  vpcId: 'vpc-013b3e4e2cff61b31',
   // availabilityZoneSubstitutions: [{source: 'us-east-1b', target: 'us-east-1c'}],
 });
 cdk.Aspects.of(integ.vpc).add(vpcStatefulCidrBlockAssigner, { priority: cdk.AspectPriority.MUTATING });
