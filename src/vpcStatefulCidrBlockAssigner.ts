@@ -3,9 +3,8 @@ import * as path from 'path';
 import { IAspect, aws_ec2 as ec2 } from 'aws-cdk-lib';
 import { IConstruct } from 'constructs';
 
-interface SubnetRecord {
+export interface SubnetRecord {
   readonly Name: string;
-  readonly LogicalId: string;
   AvailabilityZone: string;
   readonly CidrBlock: string;
 }
@@ -217,8 +216,6 @@ export class VpcStatefulCidrBlockAssigner implements IAspect {
       this.matchFreshCidrBlockWithSubnet(synthCidrBlock);
     }
 
-    // this.setSubnetLogicalId(subnet, subnetRecord.LogicalId);
-    // this.setSubnetNameTag(subnet, subnet.node.path);
     this.setSubnetCidrBlock(subnet, subnetRecord.CidrBlock);
   }
 

@@ -78,7 +78,7 @@ To generate this file, use the following AWS CLI command:
 
 ```bash
 export VPC_ID="{VPC ID}"
-aws ec2 describe-subnets --filters Name=vpc-id,Values=${VPC_ID} --query "Subnets[*].{Name: Tags[?Key == 'aws-cdk:subnet-name'] | [0].Value, LogicalId: Tags[?Key == 'aws:cloudformation:logical-id'] | [0].Value, AvailabilityZone: AvailabilityZone, CidrBlock: CidrBlock}" > ${VPC_ID}.subnets.context.json
+aws ec2 describe-subnets --filters Name=vpc-id,Values=${VPC_ID} --query "Subnets[*].{Name: Tags[?Key == 'aws-cdk:subnet-name'] | [0].Value, AvailabilityZone: AvailabilityZone, CidrBlock: CidrBlock}" > ${VPC_ID}.subnets.context.json
 ```
 
 Replace `{VPC ID}` with your actual VPC ID.
