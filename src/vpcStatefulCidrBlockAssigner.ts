@@ -47,7 +47,7 @@ export interface VpcStatefulCidrBlockAssignerProps {
    *   {source: 'us-east-1c', target: 'us-east-1d'},
    * ]
    */
-  readonly availabilityZoneSubstitutions?: Array<AvailabilityZoneSubstitution>; // TODO: Test
+  readonly availabilityZoneSubstitutions?: Array<AvailabilityZoneSubstitution>;
 }
 
 /**
