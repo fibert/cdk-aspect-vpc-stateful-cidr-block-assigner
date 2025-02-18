@@ -1,12 +1,10 @@
-import * as fs from 'fs';
-import * as path from 'path';
 import * as cdk from 'aws-cdk-lib';
 import { aws_ec2 as ec2 } from 'aws-cdk-lib';
 import { Template } from 'aws-cdk-lib/assertions';
 import { Construct } from 'constructs';
-import * as constants from './constants';
-import * as errors from '../src/errors';
-import { VpcStatefulCidrBlockAssigner, SubnetRecord } from '../src/vpcStatefulCidrBlockAssigner';
+import * as errors from '../../src/errors';
+import { VpcStatefulCidrBlockAssigner, SubnetRecord } from '../../src/vpcStatefulCidrBlockAssigner';
+import * as constants from '../constants';
 
 // CDK Stack
 interface TestStackProps extends cdk.StackProps {
@@ -40,35 +38,16 @@ const BASE_TEMPLATE = Template.fromStack(STACK);
 const BASE_SUBNETS = BASE_TEMPLATE.findResources('AWS::EC2::Subnet');
 const BASE_SUBNET_RECORDS = generateSubnetRecordsArray(BASE_SUBNETS);
 
-describe('test appending availability zone', () => {
-  test('without VpcStatefulCidrBlockAssigner expecting CIDR conflict', () => {
+describe('test substituting availability zones', () => {
+  test('without availabilityZoneSubstitutions expecting CIDR conflict', () => {
     // Given
 
     // When
     const testApp = new cdk.App();
-    const testStack = new TestStack(testApp, 'addAzStack', {
+    const testStack = new TestStack(testApp, 'substituteAzStack', {
       env: constants.ENV,
       cidrBlock: constants.CIDR_BLOCK,
-      availabilityZones: constants.AVAILABILITY_ZONES_A_B_C,
-      subnetConfiguration: constants.SUBNET_CONFIGURATION,
-    });
-
-    // Then
-    const testSubnetRecords = getSubnetRecordsFromStack(testStack);
-    const conflictingSubnetRecords = calculateConfilictingSubnets(BASE_SUBNET_RECORDS, testSubnetRecords);
-
-    expect(conflictingSubnetRecords).not.toEqual([]);
-  });
-
-  test('with VpcStatefulCidrBlockAssigner should have no CIDR conflicts', () => {
-    // Given
-
-    // When
-    const testApp = new cdk.App();
-    const testStack = new TestStack(testApp, 'addAzStack', {
-      env: constants.ENV,
-      cidrBlock: constants.CIDR_BLOCK,
-      availabilityZones: constants.AVAILABILITY_ZONES_A_B_C,
+      availabilityZones: constants.AVAILABILITY_ZONES_A_C,
       subnetConfiguration: constants.SUBNET_CONFIGURATION,
     });
     const vpcStatefulCidrBlockAssigner = new VpcStatefulCidrBlockAssigner({
@@ -83,98 +62,69 @@ describe('test appending availability zone', () => {
     const testSubnetRecords = getSubnetRecordsFromStack(testStack);
     const conflictingSubnetRecords = calculateConfilictingSubnets(BASE_SUBNET_RECORDS, testSubnetRecords);
 
+    expect(conflictingSubnetRecords).not.toEqual([]);
+  });
+
+  test('with availabilityZoneSubstitutions should have no CIDR conflicts', () => {
+    // Given
+    const substitutedBaseSubnetRecords: SubnetRecord[] = BASE_SUBNET_RECORDS.map((subnetRecord) => {
+      for (const azSubstitution of constants.AZ_SUBSTITUTION_B_C) {
+        if (subnetRecord.AvailabilityZone === azSubstitution.source) {
+          return { ...subnetRecord, AvailabilityZone: azSubstitution.target };
+        }
+      }
+      return subnetRecord;
+    });
+
+    // When
+    const testApp = new cdk.App();
+    const testStack = new TestStack(testApp, 'substituteAzStack', {
+      env: constants.ENV,
+      cidrBlock: constants.CIDR_BLOCK,
+      availabilityZones: constants.AVAILABILITY_ZONES_A_C,
+      subnetConfiguration: constants.SUBNET_CONFIGURATION,
+    });
+    const vpcStatefulCidrBlockAssigner = new VpcStatefulCidrBlockAssigner({
+      vpcId: constants.CONTEXT_FILE_VPC_ID,
+      contextFileDirectory: constants.CONTEXT_FILE_DIRECTORY,
+      availabilityZoneSubstitutions: constants.AZ_SUBSTITUTION_B_C,
+    });
+    cdk.Aspects.of(testStack.vpc).add(vpcStatefulCidrBlockAssigner, {
+      priority: cdk.AspectPriority.MUTATING,
+    });
+
+    // Then
+    const testSubnetRecords = getSubnetRecordsFromStack(testStack);
+    const conflictingSubnetRecords = calculateConfilictingSubnets(
+      substitutedBaseSubnetRecords,
+      testSubnetRecords,
+    );
+
     expect(conflictingSubnetRecords).toStrictEqual([]);
   });
-});
 
-describe('test reading subnet context files', () => {
-  test('when non existent in current working directory should throw error', () => {
-    // Given
-    const filePath = path.join(
-      process.cwd(),
-      `${constants.CONTEXT_FILE_NON_EXISTENT_VPC_ID}.subnet.context.json`,
-    );
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-
-    // When
-    const constructVpcStatefulCidrBlockAssigner = () => {
-      new VpcStatefulCidrBlockAssigner({
-        vpcId: constants.CONTEXT_FILE_NON_EXISTENT_VPC_ID,
-      });
-    };
-
-    // Then
-    expect(constructVpcStatefulCidrBlockAssigner).toThrow(errors.SUBNET_CONTEXT_FILE_DOES_NOT_EXIST);
-  });
-
-  test('when non existent in contextFileDirectory should throw error', () => {
-    // Given
-    const filePath = path.join(
-      process.cwd(),
-      constants.CONTEXT_FILE_DIRECTORY,
-      `${constants.CONTEXT_FILE_NON_EXISTENT_VPC_ID}.subnet.context.json`,
-    );
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-
-    // When
-    const constructVpcStatefulCidrBlockAssigner = () => {
-      new VpcStatefulCidrBlockAssigner({
-        vpcId: constants.CONTEXT_FILE_NON_EXISTENT_VPC_ID,
-        contextFileDirectory: constants.CONTEXT_FILE_DIRECTORY,
-      });
-    };
-
-    // Then
-    expect(constructVpcStatefulCidrBlockAssigner).toThrow(errors.SUBNET_CONTEXT_FILE_DOES_NOT_EXIST);
-  });
-
-  test('when empty should throw error', () => {
+  test('with an AZ in both VPC and availabilityZoneSubstitutions should throw error', () => {
     // Given
 
     // When
-    const constructVpcStatefulCidrBlockAssigner = () => {
-      new VpcStatefulCidrBlockAssigner({
-        vpcId: constants.CONTEXT_FILE_EMPTY_VPC_ID,
-        contextFileDirectory: constants.CONTEXT_FILE_DIRECTORY,
-      });
-    };
+    const testApp = new cdk.App();
+    const testStack = new TestStack(testApp, 'substituteAzStack', {
+      env: constants.ENV,
+      cidrBlock: constants.CIDR_BLOCK,
+      availabilityZones: constants.AVAILABILITY_ZONES_A_B_C,
+      subnetConfiguration: constants.SUBNET_CONFIGURATION,
+    });
+    const vpcStatefulCidrBlockAssigner = new VpcStatefulCidrBlockAssigner({
+      vpcId: constants.CONTEXT_FILE_VPC_ID,
+      contextFileDirectory: constants.CONTEXT_FILE_DIRECTORY,
+      availabilityZoneSubstitutions: constants.AZ_SUBSTITUTION_B_C,
+    });
+    cdk.Aspects.of(testStack.vpc).add(vpcStatefulCidrBlockAssigner, {
+      priority: cdk.AspectPriority.MUTATING,
+    });
 
     // Then
-    expect(constructVpcStatefulCidrBlockAssigner).toThrow(errors.EMPTY_SUBNET_CONTEXT_FILE);
-  });
-
-  test('when corrupt should throw error', () => {
-    // Given
-
-    // When
-    const constructVpcStatefulCidrBlockAssigner = () => {
-      new VpcStatefulCidrBlockAssigner({
-        vpcId: constants.CONTEXT_FILE_CORRUPT_VPC_ID,
-        contextFileDirectory: constants.CONTEXT_FILE_DIRECTORY,
-      });
-    };
-
-    // Then
-    expect(constructVpcStatefulCidrBlockAssigner).toThrow(errors.PARSING_SUBNET_CONTEXT_FILE);
-  });
-
-  test('when valid and existent in contextFileDirectory should not throw error', () => {
-    // Given
-
-    // When
-    const constructVpcStatefulCidrBlockAssigner = () => {
-      new VpcStatefulCidrBlockAssigner({
-        vpcId: constants.CONTEXT_FILE_VPC_ID,
-        contextFileDirectory: constants.CONTEXT_FILE_DIRECTORY,
-      });
-    };
-
-    // Then
-    expect(constructVpcStatefulCidrBlockAssigner).not.toThrow();
+    expect(() => {Template.fromStack(testStack);}).toThrow(errors.AZ_IN_BOTH_VPC_AND_SUBSTITUTION);
   });
 });
 
