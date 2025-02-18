@@ -5,5 +5,5 @@ export const PARSING_SUBNET_CONTEXT_FILE = new Error('Error parsing subnet conte
 
 export const MULTIPLE_VPCS = new Error('VpcStatefulCidrBlockAssigner can only be applied to a single VPC');
 export const AZ_IN_BOTH_VPC_AND_SUBSTITUTION = new Error(
-  'Availability Zones must only appear in one of: Availability Zone in VPC, or as a source of AvailabilityZoneSubstitutions',
+  'Availability Zones must only appear in one of: Availability Zone in VPC, or as a source of AvailabilityZoneSubstitutions'
 );
