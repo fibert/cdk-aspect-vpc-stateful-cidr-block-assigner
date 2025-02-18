@@ -28,7 +28,7 @@ class TestStack extends cdk.Stack {
 const APP = new cdk.App();
 const STACK = new TestStack(APP, 'IntegrationTestStack', {
   env: constants.ENV,
-  cidrBlock: constants.CIDR_BLOCK,
+  cidrBlock: constants.VPC_CIDR_BLOCK,
   availabilityZones: constants.AVAILABILITY_ZONES_A_B,
   subnetConfiguration: constants.SUBNET_CONFIGURATION,
 });
@@ -45,7 +45,7 @@ describe('test appending availability zone', () => {
     const testApp = new cdk.App();
     const testStack = new TestStack(testApp, 'addAzStack', {
       env: constants.ENV,
-      cidrBlock: constants.CIDR_BLOCK,
+      cidrBlock: constants.VPC_CIDR_BLOCK,
       availabilityZones: constants.AVAILABILITY_ZONES_A_B_C,
       subnetConfiguration: constants.SUBNET_CONFIGURATION,
     });
@@ -64,7 +64,7 @@ describe('test appending availability zone', () => {
     const testApp = new cdk.App();
     const testStack = new TestStack(testApp, 'addAzStack', {
       env: constants.ENV,
-      cidrBlock: constants.CIDR_BLOCK,
+      cidrBlock: constants.VPC_CIDR_BLOCK,
       availabilityZones: constants.AVAILABILITY_ZONES_A_B_C,
       subnetConfiguration: constants.SUBNET_CONFIGURATION,
     });
