@@ -3,6 +3,8 @@ import * as path from 'path';
 import { IAspect, aws_ec2 as ec2 } from 'aws-cdk-lib';
 import { IConstruct } from 'constructs';
 import * as errors from './errors';
+import { SubnetCidrBlockMatcher } from './subnetCidrBlockMatcher';
+import { SubnetManager } from './subnetManager';
 
 export interface SubnetRecord {
   readonly Name: string;
@@ -71,8 +73,7 @@ export class VpcStatefulCidrBlockAssigner implements IAspect {
   private subnetContext: Array<SubnetRecord>;
   private assignedCiderBlock: Array<string>;
 
-  private freshCidrBlocksAwaitingSubnet: Array<string> = [];
-  private subnetsAwaitingFreshCidrBlock: Array<ec2.Subnet> = [];
+  private subnetCidrBlockMatcher = new SubnetCidrBlockMatcher();
 
   private vpcCount: number = 0;
   private disallowedAvailabilityZones: Array<string> = [];
@@ -181,23 +182,18 @@ export class VpcStatefulCidrBlockAssigner implements IAspect {
     const synthCidrBlock = subnet.ipv4CidrBlock;
 
     if (this.isFreshCidrBlock(synthCidrBlock)) {
-      this.matchFreshCidrBlockWithSubnet(synthCidrBlock);
+      this.subnetCidrBlockMatcher.matchFreshCidrBlockWithSubnet(synthCidrBlock);
     }
 
-    this.setSubnetCidrBlock(subnet, subnetRecord.CidrBlock);
+    SubnetManager.setSubnetCidrBlock(subnet, subnetRecord.CidrBlock);
   }
 
   private handleNewSubnet(subnet: ec2.Subnet): void {
     const synthCidrBlock = subnet.ipv4CidrBlock;
 
     if (!this.isFreshCidrBlock(synthCidrBlock)) {
-      this.matchSubnetWithCidrBlock(subnet);
+      this.subnetCidrBlockMatcher.matchSubnetWithCidrBlock(subnet);
     }
-  }
-
-  private setSubnetCidrBlock(subnet: ec2.Subnet, newCidrBlock: string): void {
-    const l1Subnet = subnet.node.defaultChild as ec2.CfnSubnet;
-    l1Subnet.addPropertyOverride('CidrBlock', newCidrBlock);
   }
 
   private lookupAssignedSubnetCidrBlock(nodeId: string, availabilityZone: string): SubnetRecord | undefined {
@@ -206,23 +202,6 @@ export class VpcStatefulCidrBlockAssigner implements IAspect {
         return nodeId.includes(subnet.Name) && subnet.AvailabilityZone == availabilityZone;
       })
       .pop();
-  }
-  private matchSubnetWithCidrBlock(subnet: ec2.Subnet): void {
-    if (this.freshCidrBlocksAwaitingSubnet.length > 0) {
-      const freshCidrBlock = this.freshCidrBlocksAwaitingSubnet.pop()!;
-      this.setSubnetCidrBlock(subnet, freshCidrBlock);
-    } else {
-      this.subnetsAwaitingFreshCidrBlock.push(subnet);
-    }
-  }
-
-  private matchFreshCidrBlockWithSubnet(cidrBlock: string): void {
-    if (this.subnetsAwaitingFreshCidrBlock.length > 0) {
-      const subnet = this.subnetsAwaitingFreshCidrBlock.pop()!;
-      this.setSubnetCidrBlock(subnet, cidrBlock);
-    } else {
-      this.freshCidrBlocksAwaitingSubnet.push(cidrBlock);
-    }
   }
 
   private isFreshCidrBlock(cidrBlock: string): boolean {
