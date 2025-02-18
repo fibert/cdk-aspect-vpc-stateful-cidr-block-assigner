@@ -4,7 +4,6 @@ import * as errors from '../../src/errors';
 import { VpcStatefulCidrBlockAssigner } from '../../src/vpcStatefulCidrBlockAssigner';
 import * as constants from '../constants';
 
-
 describe('test reading subnet context files', () => {
   test('when non existent in current working directory should throw error', () => {
     // Given

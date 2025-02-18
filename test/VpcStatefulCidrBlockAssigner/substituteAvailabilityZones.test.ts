@@ -124,7 +124,9 @@ describe('test substituting availability zones', () => {
     });
 
     // Then
-    expect(() => {Template.fromStack(testStack);}).toThrow(errors.AZ_IN_BOTH_VPC_AND_SUBSTITUTION);
+    expect(() => {
+      Template.fromStack(testStack);
+    }).toThrow(errors.AZ_IN_BOTH_VPC_AND_SUBSTITUTION);
   });
 });
 

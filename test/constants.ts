@@ -11,7 +11,6 @@ export const AVAILABILITY_ZONES_A_B_C = ['us-east-1a', 'us-east-1b', 'us-east-1c
 
 export const AZ_SUBSTITUTION_B_C = [{ source: 'us-east-1b', target: 'us-east-1c' }];
 
-
 export const CONTEXT_FILE_DIRECTORY = 'test/VpcStatefulCidrBlockAssigner/subnet-context-files/';
 export const CONTEXT_FILE_VPC_ID = 'test';
 export const CONTEXT_FILE_EMPTY_VPC_ID = 'empty';
