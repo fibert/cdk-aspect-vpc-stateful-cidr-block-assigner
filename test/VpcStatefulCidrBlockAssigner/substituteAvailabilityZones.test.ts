@@ -29,7 +29,7 @@ class TestStack extends cdk.Stack {
 const APP = new cdk.App();
 const STACK = new TestStack(APP, 'IntegrationTestStack', {
   env: constants.ENV,
-  cidrBlock: constants.CIDR_BLOCK,
+  cidrBlock: constants.VPC_CIDR_BLOCK,
   availabilityZones: constants.AVAILABILITY_ZONES_A_B,
   subnetConfiguration: constants.SUBNET_CONFIGURATION,
 });
@@ -46,7 +46,7 @@ describe('test substituting availability zones', () => {
     const testApp = new cdk.App();
     const testStack = new TestStack(testApp, 'substituteAzStack', {
       env: constants.ENV,
-      cidrBlock: constants.CIDR_BLOCK,
+      cidrBlock: constants.VPC_CIDR_BLOCK,
       availabilityZones: constants.AVAILABILITY_ZONES_A_C,
       subnetConfiguration: constants.SUBNET_CONFIGURATION,
     });
@@ -80,7 +80,7 @@ describe('test substituting availability zones', () => {
     const testApp = new cdk.App();
     const testStack = new TestStack(testApp, 'substituteAzStack', {
       env: constants.ENV,
-      cidrBlock: constants.CIDR_BLOCK,
+      cidrBlock: constants.VPC_CIDR_BLOCK,
       availabilityZones: constants.AVAILABILITY_ZONES_A_C,
       subnetConfiguration: constants.SUBNET_CONFIGURATION,
     });
@@ -97,7 +97,7 @@ describe('test substituting availability zones', () => {
     const testSubnetRecords = getSubnetRecordsFromStack(testStack);
     const conflictingSubnetRecords = calculateConfilictingSubnets(
       substitutedBaseSubnetRecords,
-      testSubnetRecords,
+      testSubnetRecords
     );
 
     expect(conflictingSubnetRecords).toStrictEqual([]);
@@ -110,7 +110,7 @@ describe('test substituting availability zones', () => {
     const testApp = new cdk.App();
     const testStack = new TestStack(testApp, 'substituteAzStack', {
       env: constants.ENV,
-      cidrBlock: constants.CIDR_BLOCK,
+      cidrBlock: constants.VPC_CIDR_BLOCK,
       availabilityZones: constants.AVAILABILITY_ZONES_A_B_C,
       subnetConfiguration: constants.SUBNET_CONFIGURATION,
     });
@@ -161,7 +161,7 @@ function generateSubnetRecordsArray(subnets: {
 }): SubnetRecord[] {
   return Object.values(subnets).map((subnet) => {
     const name = subnet.Properties.Tags.filter(
-      (tag: { Key: string; Value: string }) => tag.Key === 'aws-cdk:subnet-name',
+      (tag: { Key: string; Value: string }) => tag.Key === 'aws-cdk:subnet-name'
     )[0].Value;
 
     return {
