@@ -8,20 +8,22 @@ export class SubnetCidrBlockMatcher {
   constructor() {}
 
   matchSubnetWithCidrBlock(subnet: ec2.Subnet): void {
-    if (this.freshCidrBlocksAwaitingSubnet.length > 0) {
-      const freshCidrBlock = this.freshCidrBlocksAwaitingSubnet.pop()!;
-      SubnetManager.setSubnetCidrBlock(subnet, freshCidrBlock);
-    } else {
+    const freshCidrBlock: string | undefined = this.freshCidrBlocksAwaitingSubnet.pop();
+
+    if (freshCidrBlock === undefined) {
       this.subnetsAwaitingFreshCidrBlock.push(subnet);
+    } else {
+      SubnetManager.setSubnetCidrBlock(subnet, freshCidrBlock);
     }
   }
 
   matchFreshCidrBlockWithSubnet(cidrBlock: string): void {
-    if (this.subnetsAwaitingFreshCidrBlock.length > 0) {
-      const subnet = this.subnetsAwaitingFreshCidrBlock.pop()!;
-      SubnetManager.setSubnetCidrBlock(subnet, cidrBlock);
-    } else {
+    const subnet: ec2.Subnet | undefined = this.subnetsAwaitingFreshCidrBlock.pop();
+
+    if (subnet === undefined) {
       this.freshCidrBlocksAwaitingSubnet.push(cidrBlock);
+    } else {
+      SubnetManager.setSubnetCidrBlock(subnet, cidrBlock);
     }
   }
 }

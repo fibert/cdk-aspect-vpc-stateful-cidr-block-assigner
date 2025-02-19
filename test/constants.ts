@@ -1,12 +1,13 @@
 import * as cdk from 'aws-cdk-lib';
 import { aws_ec2 as ec2 } from 'aws-cdk-lib';
 
-export const ENV: cdk.Environment = { account: '027179758433', region: 'us-east-1' };
+export const ENV: cdk.Environment = { account: '012345678901', region: 'us-east-1' };
 
 export const VPC_CIDR_BLOCK = '10.10.0.0/16';
-export const SUBNET_CIDR_BLOCK_1 = '10.10.1.0/24';
-export const SUBNET_CIDR_BLOCK_2 = '10.10.2.0/24';
+export const SUBNET_CIDR_BLOCK_1 = '1.1.1.0/24';
+export const SUBNET_CIDR_BLOCK_2 = '2.2.2.0/24';
 
+export const AVAILABILITY_ZONES_A = 'us-east-1a';
 export const AVAILABILITY_ZONES_A_B = ['us-east-1a', 'us-east-1b'];
 export const AVAILABILITY_ZONES_A_C = ['us-east-1a', 'us-east-1c'];
 export const AVAILABILITY_ZONES_A_B_C = ['us-east-1a', 'us-east-1b', 'us-east-1c'];
