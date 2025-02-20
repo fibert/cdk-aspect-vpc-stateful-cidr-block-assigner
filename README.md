@@ -108,6 +108,8 @@ cdk.Aspects.of(network).add(vpcStatefulCidrBlockAssigner, {
 });
 ```
 
+The `priority: cdk.AspectPriority.MUTATING` option informs CDK this Aspect mutates the construct tree, and needs to be invoked before any readonly Aspects which are commonly used for security validations before deployment. E.g., [cdk-nag](https://github.com/cdklabs/cdk-nag).
+
 ### Configuration Options
 
 The `VpcStatefulCidrBlockAssigner` accepts the following properties:
