@@ -4,6 +4,7 @@ import { Template } from 'aws-cdk-lib/assertions';
 import { Construct } from 'constructs';
 import { VpcStatefulCidrBlockAssigner, SubnetRecord } from '../../src/vpcStatefulCidrBlockAssigner';
 import * as constants from '../constants';
+import { SubnetUtils } from './subnetUtils';
 
 // CDK Stack
 interface TestStackProps extends cdk.StackProps {
@@ -42,7 +43,7 @@ beforeAll(() => {
 
   baseTemplate = Template.fromStack(baseStack);
   baseSubnets = baseTemplate.findResources('AWS::EC2::Subnet');
-  baseSubnetRecords = generateSubnetRecordsArray(baseSubnets);
+  baseSubnetRecords = SubnetUtils.generateSubnetRecordsArray(baseSubnets);
 });
 
 let testApp: cdk.App;
@@ -65,8 +66,11 @@ describe('test appending availability zone', () => {
     // When
 
     // Then
-    const testSubnetRecords = getSubnetRecordsFromStack(testStack);
-    const conflictingSubnetRecords = calculateConfilictingSubnets(baseSubnetRecords, testSubnetRecords);
+    const testSubnetRecords = SubnetUtils.getSubnetRecordsFromStack(testStack);
+    const conflictingSubnetRecords = SubnetUtils.calculateConfilictingSubnets(
+      baseSubnetRecords,
+      testSubnetRecords,
+    );
 
     expect(conflictingSubnetRecords).not.toEqual([]);
   });
@@ -84,51 +88,12 @@ describe('test appending availability zone', () => {
     });
 
     // Then
-    const testSubnetRecords = getSubnetRecordsFromStack(testStack);
-    const conflictingSubnetRecords = calculateConfilictingSubnets(baseSubnetRecords, testSubnetRecords);
+    const testSubnetRecords = SubnetUtils.getSubnetRecordsFromStack(testStack);
+    const conflictingSubnetRecords = SubnetUtils.calculateConfilictingSubnets(
+      baseSubnetRecords,
+      testSubnetRecords,
+    );
 
     expect(conflictingSubnetRecords).toStrictEqual([]);
   });
 });
-
-function getSubnetRecordsFromStack(stack: cdk.Stack): SubnetRecord[] {
-  const template = Template.fromStack(stack);
-  const subnets = template.findResources('AWS::EC2::Subnet');
-  return generateSubnetRecordsArray(subnets);
-}
-
-function calculateConfilictingSubnets(first: SubnetRecord[], second: SubnetRecord[]): SubnetRecord[] {
-  return first.filter((firstSubnetRecord) => {
-    for (const secondSubnetRecord of second) {
-      if (isConflicting(firstSubnetRecord, secondSubnetRecord)) {
-        return true;
-      }
-    }
-    return false;
-  });
-}
-
-function isConflicting(first: SubnetRecord, second: SubnetRecord): boolean {
-  return (
-    first.CidrBlock === second.CidrBlock &&
-    !(first.AvailabilityZone === second.AvailabilityZone && first.Name === first.Name)
-  );
-}
-
-function generateSubnetRecordsArray(subnets: {
-  [key: string]: {
-    [key: string]: any;
-  };
-}): SubnetRecord[] {
-  return Object.values(subnets).map((subnet) => {
-    const name = subnet.Properties.Tags.filter(
-      (tag: { Key: string; Value: string }) => tag.Key === 'aws-cdk:subnet-name',
-    )[0].Value;
-
-    return {
-      Name: name,
-      AvailabilityZone: subnet.Properties.AvailabilityZone,
-      CidrBlock: subnet.Properties.CidrBlock,
-    } as SubnetRecord;
-  });
-}
