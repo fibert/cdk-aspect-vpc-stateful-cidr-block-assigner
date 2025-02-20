@@ -1,1 +1,5 @@
-export { VpcStatefulCidrBlockAssigner, VpcStatefulCidrBlockAssignerProps, AvailabilityZoneSubstitution } from './vpcStatefulCidrBlockAssigner';
+export {
+  VpcStatefulCidrBlockAssigner,
+  VpcStatefulCidrBlockAssignerProps,
+  AvailabilityZoneSubstitution,
+} from './vpcStatefulCidrBlockAssigner';
