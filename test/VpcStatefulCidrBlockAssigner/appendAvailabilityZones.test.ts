@@ -6,7 +6,6 @@ import { VpcStatefulCidrBlockAssigner, SubnetRecord } from '../../src/vpcStatefu
 import * as constants from '../constants';
 import { SubnetUtils } from './subnetUtils';
 
-// CDK Stack
 interface TestStackProps extends cdk.StackProps {
   cidrBlock: string;
   availabilityZones: Array<string>;
