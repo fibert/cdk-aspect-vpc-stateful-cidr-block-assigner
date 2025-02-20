@@ -62,7 +62,6 @@ The subnet context file holds a list of JSON objects describing each subnet insi
 [
     {
         "Name": "SubnetName",
-        "LogicalId": "SubnetNameLogicalId",
         "AvailabilityZone": "AvailabilityZone",
         "CidrBlock": "SubnetCidrBlock"
     },
