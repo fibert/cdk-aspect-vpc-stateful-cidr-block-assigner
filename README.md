@@ -48,7 +48,7 @@ Prerequisites:
 To install the package in your project:
 
 ```bash
-npm install cdk-aspect-vpc-stateful-cidr-block-assigner
+npm install @dfibert/cdk-aspect-vpc-stateful-cidr-block-assigner
 ```
 
 ### Generate Subnet Context File
