@@ -20,5 +20,6 @@ project.vscode?.extensions.addRecommendations('dbaeumer.vscode-eslint', 'esbenp.
 project.addGitIgnore('cdk.out/');
 project.addGitIgnore('.vscode/');
 project.addGitIgnore('*.subnets.context.json');
+project.addGitIgnore('!test/**/*.subnets.context.json');
 
 project.synth();
