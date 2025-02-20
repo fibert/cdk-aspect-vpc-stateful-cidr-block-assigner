@@ -4,7 +4,7 @@ import { IAspect, aws_ec2 as ec2 } from 'aws-cdk-lib';
 import { IConstruct } from 'constructs';
 import * as errors from './errors';
 import { SubnetCidrBlockMatcher } from './subnetCidrBlockMatcher';
-import { SubnetManager } from './subnetManager';
+import { SubnetMutator } from './subnetMutator';
 
 export interface SubnetRecord {
   readonly Name: string;
@@ -185,7 +185,7 @@ export class VpcStatefulCidrBlockAssigner implements IAspect {
       this.subnetCidrBlockMatcher.matchFreshCidrBlockWithSubnet(synthCidrBlock);
     }
 
-    SubnetManager.setSubnetCidrBlock(subnet, subnetRecord.CidrBlock);
+    SubnetMutator.setSubnetCidrBlock(subnet, subnetRecord.CidrBlock);
   }
 
   private handleNewSubnet(subnet: ec2.Subnet): void {

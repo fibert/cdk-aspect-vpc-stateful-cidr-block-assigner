@@ -1,5 +1,5 @@
 import { aws_ec2 as ec2 } from 'aws-cdk-lib';
-import { SubnetManager } from './subnetManager';
+import { SubnetMutator } from './subnetMutator';
 
 export class SubnetCidrBlockMatcher {
   private freshCidrBlocksAwaitingSubnet: Array<string> = [];
@@ -13,7 +13,7 @@ export class SubnetCidrBlockMatcher {
     if (freshCidrBlock === undefined) {
       this.subnetsAwaitingFreshCidrBlock.push(subnet);
     } else {
-      SubnetManager.setSubnetCidrBlock(subnet, freshCidrBlock);
+      SubnetMutator.setSubnetCidrBlock(subnet, freshCidrBlock);
     }
   }
 
@@ -23,7 +23,7 @@ export class SubnetCidrBlockMatcher {
     if (subnet === undefined) {
       this.freshCidrBlocksAwaitingSubnet.push(cidrBlock);
     } else {
-      SubnetManager.setSubnetCidrBlock(subnet, cidrBlock);
+      SubnetMutator.setSubnetCidrBlock(subnet, cidrBlock);
     }
   }
 }

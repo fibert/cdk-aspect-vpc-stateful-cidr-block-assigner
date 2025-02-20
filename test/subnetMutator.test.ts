@@ -2,9 +2,9 @@ import * as cdk from 'aws-cdk-lib';
 import { aws_ec2 as ec2 } from 'aws-cdk-lib';
 import { Capture, Template } from 'aws-cdk-lib/assertions';
 import * as constants from './constants';
-import { SubnetManager } from '../src/subnetManager';
+import { SubnetMutator } from '../src/subnetMutator';
 
-describe('test SubnetManager', () => {
+describe('test SubnetMutator', () => {
   test('when setting a new CIDR block to subnet', () => {
     // Given
     const testApp = new cdk.App();
@@ -23,7 +23,7 @@ describe('test SubnetManager', () => {
 
     // When
     const testSubnet = testVpc.publicSubnets[0] as ec2.Subnet;
-    SubnetManager.setSubnetCidrBlock(testSubnet, constants.SUBNET_CIDR_BLOCK_2);
+    SubnetMutator.setSubnetCidrBlock(testSubnet, constants.SUBNET_CIDR_BLOCK_2);
 
     // Then
     const template = Template.fromStack(testStack);

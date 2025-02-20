@@ -97,7 +97,7 @@ describe('test substituting availability zones', () => {
     const testSubnetRecords = getSubnetRecordsFromStack(testStack);
     const conflictingSubnetRecords = calculateConfilictingSubnets(
       substitutedBaseSubnetRecords,
-      testSubnetRecords
+      testSubnetRecords,
     );
 
     expect(conflictingSubnetRecords).toStrictEqual([]);
@@ -161,7 +161,7 @@ function generateSubnetRecordsArray(subnets: {
 }): SubnetRecord[] {
   return Object.values(subnets).map((subnet) => {
     const name = subnet.Properties.Tags.filter(
-      (tag: { Key: string; Value: string }) => tag.Key === 'aws-cdk:subnet-name'
+      (tag: { Key: string; Value: string }) => tag.Key === 'aws-cdk:subnet-name',
     )[0].Value;
 
     return {
