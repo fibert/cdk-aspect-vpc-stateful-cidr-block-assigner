@@ -1,5 +1,5 @@
 {
-  "name": "@dfibert/cdk-aspect-vpc-stateful-cidr-block-assigner",
+  "name": "cdk-aspect-vpc-stateful-cidr-block-assigner",
   "description": "CDK Aspect to alter the Amazon VPC subnet CIDR blocks assignment to respect existing CIDR blocks when updating a CDK Vpc construct",
   "repository": {
     "type": "git",
@@ -67,6 +67,9 @@
   ],
   "main": "lib/index.js",
   "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
   "version": "0.0.0",
   "jest": {
     "coverageProvider": "v8",

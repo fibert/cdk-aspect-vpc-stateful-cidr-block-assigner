@@ -5,7 +5,7 @@ const project = new awscdk.AwsCdkConstructLibrary({
   cdkVersion: '2.178.1',
   defaultReleaseBranch: 'main',
   jsiiVersion: '~5.7.0',
-  name: '@dfibert/cdk-aspect-vpc-stateful-cidr-block-assigner',
+  name: 'cdk-aspect-vpc-stateful-cidr-block-assigner',
   projenrcTs: true,
   repositoryUrl: 'https://github.com/dorfib/cdk-aspect-vpc-stateful-cidr-block-assigner.git',
 
