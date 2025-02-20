@@ -25,31 +25,54 @@ class TestStack extends cdk.Stack {
     });
   }
 }
+let baseApp: cdk.App;
+let baseStack: TestStack;
+let baseTemplate: Template;
+let baseSubnets: { [key: string]: { [key: string]: any } };
+let baseSubnetRecords: Array<SubnetRecord>;
+let baseSubstitutedSubnetRecords: Array<SubnetRecord>;
 
-const APP = new cdk.App();
-const STACK = new TestStack(APP, 'IntegrationTestStack', {
-  env: constants.ENV,
-  cidrBlock: constants.VPC_CIDR_BLOCK,
-  availabilityZones: constants.AVAILABILITY_ZONES_A_B,
-  subnetConfiguration: constants.SUBNET_CONFIGURATION,
+beforeAll(() => {
+  baseApp = new cdk.App();
+  baseStack = new TestStack(baseApp, 'Stack', {
+    env: constants.ENV,
+    cidrBlock: constants.VPC_CIDR_BLOCK,
+    availabilityZones: constants.AVAILABILITY_ZONES_A_B,
+    subnetConfiguration: constants.SUBNET_CONFIGURATION,
+  });
+
+  baseTemplate = Template.fromStack(baseStack);
+  baseSubnets = baseTemplate.findResources('AWS::EC2::Subnet');
+  baseSubnetRecords = generateSubnetRecordsArray(baseSubnets);
+
+  baseSubstitutedSubnetRecords = baseSubnetRecords.map((subnetRecord) => {
+    for (const azSubstitution of constants.AZ_SUBSTITUTION_B_C) {
+      if (subnetRecord.AvailabilityZone === azSubstitution.source) {
+        return { ...subnetRecord, AvailabilityZone: azSubstitution.target };
+      }
+    }
+    return subnetRecord;
+  });
 });
 
-const BASE_TEMPLATE = Template.fromStack(STACK);
-const BASE_SUBNETS = BASE_TEMPLATE.findResources('AWS::EC2::Subnet');
-const BASE_SUBNET_RECORDS = generateSubnetRecordsArray(BASE_SUBNETS);
+let testApp: cdk.App;
+let testStack: TestStack;
+
+beforeEach(() => {
+  testApp = new cdk.App();
+  testStack = new TestStack(testApp, 'Stack', {
+    env: constants.ENV,
+    cidrBlock: constants.VPC_CIDR_BLOCK,
+    availabilityZones: constants.AVAILABILITY_ZONES_A_C, // Replace AZ B with C
+    subnetConfiguration: constants.SUBNET_CONFIGURATION,
+  });
+});
 
 describe('test substituting availability zones', () => {
   test('without availabilityZoneSubstitutions expecting CIDR conflict', () => {
     // Given
 
     // When
-    const testApp = new cdk.App();
-    const testStack = new TestStack(testApp, 'substituteAzStack', {
-      env: constants.ENV,
-      cidrBlock: constants.VPC_CIDR_BLOCK,
-      availabilityZones: constants.AVAILABILITY_ZONES_A_C,
-      subnetConfiguration: constants.SUBNET_CONFIGURATION,
-    });
     const vpcStatefulCidrBlockAssigner = new VpcStatefulCidrBlockAssigner({
       vpcId: constants.CONTEXT_FILE_VPC_ID,
       contextFileDirectory: constants.CONTEXT_FILE_DIRECTORY,
@@ -60,30 +83,15 @@ describe('test substituting availability zones', () => {
 
     // Then
     const testSubnetRecords = getSubnetRecordsFromStack(testStack);
-    const conflictingSubnetRecords = calculateConfilictingSubnets(BASE_SUBNET_RECORDS, testSubnetRecords);
+    const conflictingSubnetRecords = calculateConfilictingSubnets(baseSubnetRecords, testSubnetRecords);
 
     expect(conflictingSubnetRecords).not.toEqual([]);
   });
 
   test('with availabilityZoneSubstitutions should have no CIDR conflicts', () => {
     // Given
-    const substitutedBaseSubnetRecords: SubnetRecord[] = BASE_SUBNET_RECORDS.map((subnetRecord) => {
-      for (const azSubstitution of constants.AZ_SUBSTITUTION_B_C) {
-        if (subnetRecord.AvailabilityZone === azSubstitution.source) {
-          return { ...subnetRecord, AvailabilityZone: azSubstitution.target };
-        }
-      }
-      return subnetRecord;
-    });
 
     // When
-    const testApp = new cdk.App();
-    const testStack = new TestStack(testApp, 'substituteAzStack', {
-      env: constants.ENV,
-      cidrBlock: constants.VPC_CIDR_BLOCK,
-      availabilityZones: constants.AVAILABILITY_ZONES_A_C,
-      subnetConfiguration: constants.SUBNET_CONFIGURATION,
-    });
     const vpcStatefulCidrBlockAssigner = new VpcStatefulCidrBlockAssigner({
       vpcId: constants.CONTEXT_FILE_VPC_ID,
       contextFileDirectory: constants.CONTEXT_FILE_DIRECTORY,
@@ -96,7 +104,7 @@ describe('test substituting availability zones', () => {
     // Then
     const testSubnetRecords = getSubnetRecordsFromStack(testStack);
     const conflictingSubnetRecords = calculateConfilictingSubnets(
-      substitutedBaseSubnetRecords,
+      baseSubstitutedSubnetRecords,
       testSubnetRecords,
     );
 
@@ -105,15 +113,14 @@ describe('test substituting availability zones', () => {
 
   test('with an AZ in both VPC and availabilityZoneSubstitutions should throw error', () => {
     // Given
-
-    // When
-    const testApp = new cdk.App();
-    const testStack = new TestStack(testApp, 'substituteAzStack', {
+    testStack = new TestStack(testApp, 'substituteAzStack', {
       env: constants.ENV,
       cidrBlock: constants.VPC_CIDR_BLOCK,
       availabilityZones: constants.AVAILABILITY_ZONES_A_B_C,
       subnetConfiguration: constants.SUBNET_CONFIGURATION,
     });
+
+    // When
     const vpcStatefulCidrBlockAssigner = new VpcStatefulCidrBlockAssigner({
       vpcId: constants.CONTEXT_FILE_VPC_ID,
       contextFileDirectory: constants.CONTEXT_FILE_DIRECTORY,
