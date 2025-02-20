@@ -6,14 +6,43 @@ import * as errors from './errors';
 import { SubnetCidrBlockMatcher } from './subnetCidrBlockMatcher';
 import { SubnetMutator } from './subnetMutator';
 
+/**
+ * Represents a subnet record with its properties
+ */
 export interface SubnetRecord {
+  /**
+   * The name identifier of the subnet
+   */
   readonly Name: string;
+
+  /**
+   * The Availability Zone where the subnet is located
+   * Can be modified when applying AZ substitutions
+   */
   AvailabilityZone: string;
+
+  /**
+   * The CIDR block range assigned to the subnet
+   */
   readonly CidrBlock: string;
 }
 
+/**
+ * Represents a mapping between source and target Availability Zones for subnet substitution
+ */
 export interface AvailabilityZoneSubstitution {
+  /**
+   * The source Availability Zone to substitute from.
+   * All subnets in this AZ must be manually deleted before substitution.
+   * @example 'us-east-1a'
+   */
   readonly source: string;
+
+  /**
+   * The target Availability Zone to substitute to.
+   * The source AZ's subnet CIDR blocks will be assigned to subnets in this AZ.
+   * @example 'us-east-1b'
+   */
   readonly target: string;
 }
 
