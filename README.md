@@ -241,39 +241,6 @@ Requirement: Always have at least two active AZs
 3. Shrink temporary 'non-goal' AZ: `availabilityZones: ['us-east-1a', 'us-east-1c']`
     1. Test that the application is stable
 
-## Troubleshooting
-
-### Common Issues
-
-1. **Missing Subnet Context File**
-
-   Error message: `Error reading subnet context file: {path}. Use provided script in README.md to generate.`
-
-   Solution: Ensure you've generated the subnet context file using the AWS CLI command provided in the Usage Instructions section.
-
-2. **Empty Subnet Context File**
-
-   Error message: `Subnet context file is empty. Use provided script in README.md to generate.`
-
-   Solution: Verify that the AWS CLI command executed successfully and produced a non-empty JSON file.
-
-3. **Invalid JSON in Subnet Context File**
-
-   Error message: `Error parsing subnet context file. Use provided script in README.md to generate.`
-
-   Solution: Check the content of the subnet context file and ensure it's valid JSON. Regenerate the file if necessary.
-
-4. **Multiple VPCs Error**
-
-   Error message: `VpcStatefulCidrBlockAssigner can only be applied to a single VPC`
-
-   Solution: Ensure that you're applying the VpcStatefulCidrBlockAssigner to only one VPC construct in your CDK stack.
-
-5. **Availability Zone Conflict**
-
-   Error message: `Availability Zone {az} must only appear in one of: Availability Zone in VPC, or as a source of AvailabilityZoneSubstitutions`
-
-   Solution: Check your VPC configuration and AvailabilityZoneSubstitutions to ensure there are no conflicts. An AZ can't be in both VPC and AvailabilityZoneSubstitutions.
 
 ## CIDR Block Assignment Flow
 
