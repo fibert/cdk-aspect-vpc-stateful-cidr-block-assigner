@@ -1,4 +1,5 @@
 import { awscdk } from 'projen';
+const VSCODE_EXTENSIONS = ['esbenp.prettier-vscode', 'dbaeumer.vscode-eslint'];
 const project = new awscdk.AwsCdkConstructLibrary({
   author: 'Dor Fibert',
   authorAddress: 'dorfib@gmail.com',
@@ -13,9 +14,20 @@ const project = new awscdk.AwsCdkConstructLibrary({
   description: 'CDK Aspect to alter the Amazon VPC subnet CIDR blocks assignment to respect existing CIDR blocks when updating a CDK Vpc construct',
   // devDeps: [],             /* Build dependencies for this module. */
   // packageName: undefined,  /* The "name" in package.json. */
+  devContainer: true,
 });
 
-project.vscode?.extensions.addRecommendations('dbaeumer.vscode-eslint', 'esbenp.prettier-vscode');
+const setupTask = project.addTask('devenv:setup');
+setupTask.exec('npx yarn install');
+setupTask.spawn(project.buildTask);
+project.devContainer?.addTasks(setupTask);
+project.npmignore?.exclude('/.devcontainer.json');
+
+project.devContainer?.addVscodeExtensions(...VSCODE_EXTENSIONS);
+// project.devContainer?.addTasks(project.buildTask);
+
+
+project.vscode?.extensions.addRecommendations(...VSCODE_EXTENSIONS);
 
 project.addGitIgnore('cdk.out/');
 project.addGitIgnore('.vscode/*');
