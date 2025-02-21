@@ -8,7 +8,7 @@ const project = new awscdk.AwsCdkConstructLibrary({
   jsiiVersion: '~5.7.0',
   name: 'cdk-aspect-vpc-stateful-cidr-block-assigner',
   projenrcTs: true,
-  repositoryUrl: 'https://github.com/dorfib/cdk-aspect-vpc-stateful-cidr-block-assigner.git',
+  repositoryUrl: 'https://github.com/fibert/cdk-aspect-vpc-stateful-cidr-block-assigner.git',
 
   // deps: [],                /* Runtime dependencies of this module. */
   description: 'CDK Aspect to alter the Amazon VPC subnet CIDR blocks assignment to respect existing CIDR blocks when updating a CDK Vpc construct',

@@ -3,7 +3,7 @@
   "description": "CDK Aspect to alter the Amazon VPC subnet CIDR blocks assignment to respect existing CIDR blocks when updating a CDK Vpc construct",
   "repository": {
     "type": "git",
-    "url": "https://github.com/dorfib/cdk-aspect-vpc-stateful-cidr-block-assigner.git"
+    "url": "https://github.com/fibert/cdk-aspect-vpc-stateful-cidr-block-assigner.git"
   },
   "scripts": {
     "build": "npx projen build",
