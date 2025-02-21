@@ -101,6 +101,17 @@
         }
       ]
     },
+    "devenv:setup": {
+      "name": "devenv:setup",
+      "steps": [
+        {
+          "exec": "yarn install"
+        },
+        {
+          "spawn": "build"
+        }
+      ]
+    },
     "docgen": {
       "name": "docgen",
       "description": "Generate API.md from .jsii manifest",
