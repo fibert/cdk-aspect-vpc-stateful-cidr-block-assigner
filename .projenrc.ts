@@ -18,7 +18,7 @@ const project = new awscdk.AwsCdkConstructLibrary({
 });
 
 const setupTask = project.addTask('devenv:setup');
-setupTask.exec('npx yarn install');
+setupTask.exec('yarn install');
 setupTask.spawn(project.buildTask);
 project.devContainer?.addTasks(setupTask);
 project.npmignore?.exclude('/.devcontainer.json');
