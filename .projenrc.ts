@@ -18,7 +18,8 @@ const project = new awscdk.AwsCdkConstructLibrary({
 project.vscode?.extensions.addRecommendations('dbaeumer.vscode-eslint', 'esbenp.prettier-vscode');
 
 project.addGitIgnore('cdk.out/');
-project.addGitIgnore('.vscode/');
+project.addGitIgnore('.vscode/*');
+project.addGitIgnore('!.vscode/extensions.json');
 project.addGitIgnore('*.subnets.context.json');
 project.addGitIgnore('!test/**/*.subnets.context.json');
 
