@@ -51,7 +51,8 @@ tsconfig.json
 !/API.md
 !/.vscode/extensions.json
 cdk.out/
-.vscode/
+.vscode/*
+!.vscode/extensions.json
 *.subnets.context.json
 !test/**/*.subnets.context.json
 !/.projenrc.ts
