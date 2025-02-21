@@ -1,4 +1,4 @@
-import { awscdk } from 'projen';
+import { awscdk, JsonPatch } from 'projen';
 const VSCODE_EXTENSIONS = ['esbenp.prettier-vscode', 'dbaeumer.vscode-eslint'];
 const project = new awscdk.AwsCdkConstructLibrary({
   author: 'Dor Fibert',
@@ -22,6 +22,9 @@ setupTask.exec('yarn install');
 setupTask.spawn(project.buildTask);
 project.devContainer?.addTasks(setupTask);
 project.npmignore?.exclude('/.devcontainer.json');
+
+const devContainerFile = project.tryFindObjectFile('.devcontainer.json');
+devContainerFile?.patch(JsonPatch.replace('/postCreateCommand', 'npx -y projen devenv:setup'));
 
 project.devContainer?.addVscodeExtensions(...VSCODE_EXTENSIONS);
 // project.devContainer?.addTasks(project.buildTask);

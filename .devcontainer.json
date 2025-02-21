@@ -1,5 +1,5 @@
 {
-  "postCreateCommand": "( npx projen devenv:setup )",
+  "postCreateCommand": "npx -y projen devenv:setup",
   "extensions": [
     "esbenp.prettier-vscode",
     "dbaeumer.vscode-eslint"
