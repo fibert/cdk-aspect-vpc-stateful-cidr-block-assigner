@@ -2,7 +2,7 @@ import { IAspect, aws_ec2 as ec2 } from 'aws-cdk-lib';
 import { IConstruct } from 'constructs';
 import * as errors from './errors';
 import { SubnetCidrBlockMatcher } from './subnetCidrBlockMatcher';
-import { SubnetContextFileParser } from './subnetContextFileParser';
+import { SubnetsContextFileParser } from './subnetContextFileParser';
 import { SubnetMutator } from './subnetMutator';
 
 /**
@@ -108,7 +108,7 @@ export class VpcStatefulCidrBlockAssigner implements IAspect {
 
 
   constructor(props: VpcStatefulCidrBlockAssignerProps) {
-    this.subnetContext = SubnetContextFileParser.parse(props.vpcId, props.contextFileDirectory);
+    this.subnetContext = SubnetsContextFileParser.parse(props.vpcId, props.contextFileDirectory);
     this.assignedCiderBlock = this.collectAssignedCidrBlocks(this.subnetContext);
 
     if (typeof props.availabilityZoneSubstitutions !== 'undefined') {

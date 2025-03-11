@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as errors from './errors';
 import { SubnetRecord } from './vpcStatefulCidrBlockAssigner';
 
-export class SubnetContextFileParser {
+export class SubnetsContextFileParser {
   /**
    * Parses a subnet context file and returns an array of subnet records
    * @param vpcId The ID of the VPC to parse subnet context for
@@ -11,8 +11,8 @@ export class SubnetContextFileParser {
    * @returns Array of subnet records parsed from the context file
    */
   public static parse(vpcId: string, contextFileDirectory?: string): Array<SubnetRecord> {
-    const contextFilePath = SubnetContextFileParser.generateContextFilePath(vpcId, contextFileDirectory);
-    return SubnetContextFileParser.readSubnetContextFromFile(contextFilePath);
+    const contextFilePath = SubnetsContextFileParser.generateContextFilePath(vpcId, contextFileDirectory);
+    return SubnetsContextFileParser.readSubnetContextFromFile(contextFilePath);
   }
 
   private static generateContextFilePath(vpcId: string, contextFileDirectory?: string): string {
