@@ -1,9 +1,8 @@
-import * as fs from 'fs';
-import * as path from 'path';
 import { IAspect, aws_ec2 as ec2 } from 'aws-cdk-lib';
 import { IConstruct } from 'constructs';
 import * as errors from './errors';
 import { SubnetCidrBlockMatcher } from './subnetCidrBlockMatcher';
+import { SubnetsContextFileParser } from './subnetContextFileParser';
 import { SubnetMutator } from './subnetMutator';
 
 /**
@@ -107,9 +106,9 @@ export class VpcStatefulCidrBlockAssigner implements IAspect {
   private vpcCount: number = 0;
   private disallowedAvailabilityZones: Array<string> = [];
 
+
   constructor(props: VpcStatefulCidrBlockAssignerProps) {
-    const subnetContextFilePath = this.generateContextFilePath(props.vpcId, props.contextFileDirectory);
-    this.subnetContext = this.readSubnetContextFromFile(subnetContextFilePath);
+    this.subnetContext = SubnetsContextFileParser.parse(props.vpcId, props.contextFileDirectory);
     this.assignedCiderBlock = this.collectAssignedCidrBlocks(this.subnetContext);
 
     if (typeof props.availabilityZoneSubstitutions !== 'undefined') {
@@ -148,39 +147,6 @@ export class VpcStatefulCidrBlockAssigner implements IAspect {
     return newSubnetContext;
   }
 
-  private generateContextFilePath(vpcId: string, contextFileDirectory?: string): string {
-    const directoryPath: string =
-      typeof contextFileDirectory !== 'undefined' ? contextFileDirectory : process.cwd();
-    const contextFilePath = path.join(directoryPath, `${vpcId}.subnets.context.json`);
-    return contextFilePath;
-  }
-
-  private readSubnetContextFromFile(subnetContextFilePath: string): Array<SubnetRecord> {
-    let subnetContextJsonString: string;
-    let subnetContext: Array<SubnetRecord>;
-
-    if (!fs.existsSync(subnetContextFilePath)) {
-      throw errors.SUBNET_CONTEXT_FILE_DOES_NOT_EXIST;
-    }
-
-    try {
-      subnetContextJsonString = fs.readFileSync(subnetContextFilePath, 'utf-8');
-    } catch (error) {
-      throw errors.READING_SUBNET_CONTEXT_FILE;
-    }
-
-    if (subnetContextJsonString.length == 0) {
-      throw errors.EMPTY_SUBNET_CONTEXT_FILE;
-    }
-
-    try {
-      subnetContext = JSON.parse(subnetContextJsonString) as Array<SubnetRecord>;
-    } catch (error) {
-      throw errors.PARSING_SUBNET_CONTEXT_FILE;
-    }
-
-    return subnetContext;
-  }
 
   visit(node: IConstruct): void {
     if (node instanceof ec2.Vpc) {
