@@ -1,3 +1,6 @@
+[![View on Construct Hub](https://constructs.dev/badge?package=cdk-aspect-vpc-stateful-cidr-block-assigner)](https://constructs.dev/packages/cdk-aspect-vpc-stateful-cidr-block-assigner)
+
+
 # CDK Aspect for VPC Stateful CIDR Block Assignment
 
 Updating Availability Zones (AZs) and subnets in an existing VPC within a deployed CDK stack presents a significant challenge when using the [ec2.Vpc construct](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ec2.Vpc.html). When introducing new AZs (e.g., from 2 to 3 AZs), CDK attempts to create new subnets for the additional AZ, but these new subnets' CIDR blocks conflict with existing subnet CIDRs. Attempting to do so results in the error message: "The CIDR 'X.Y.Z.0/24' conflicts with another subnet."
