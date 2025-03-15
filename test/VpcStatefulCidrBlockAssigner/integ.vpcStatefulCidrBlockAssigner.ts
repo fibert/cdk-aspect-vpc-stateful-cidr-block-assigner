@@ -7,7 +7,7 @@ import { VpcStatefulCidrBlockAssigner } from "../../src/vpcStatefulCidrBlockAssi
 
 const SUBNET_CONTEXT_FILE_DIRECTORY = path.join(__dirname, "subnet-context-files");
 
-const REGION = process.env["AWS_REGION"];
+const REGION = process.env["AWS_REGION"] || "us-east-1";
 const CIDR_BLOCK = "10.1.0.0/16";
 
 const SUBNET_CONFIGURATION: Array<ec2.SubnetConfiguration> = [
