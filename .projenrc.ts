@@ -12,11 +12,14 @@ const project = new awscdk.AwsCdkConstructLibrary({
 
   experimentalIntegRunner: true,
 
-  // deps: [],                /* Runtime dependencies of this module. */
   description: 'CDK Aspect to alter the Amazon VPC subnet CIDR blocks assignment to respect existing CIDR blocks when updating a CDK Vpc construct',
-  // devDeps: [],             /* Build dependencies for this module. */
-  // packageName: undefined,  /* The "name" in package.json. */
+
   devContainer: true,
+
+  publishToPypi: {
+    distName: 'cdk-aspect-vpc-stateful-cidr-block-assigner',
+    module: 'cdk_aspect_vpc_stateful_cidr_block_assigner',
+  },
 });
 
 const setupTask = project.addTask('devenv:setup');
